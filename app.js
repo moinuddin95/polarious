@@ -16,15 +16,27 @@ const apiKeys = {
 };
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cors());
-app.use(express.json());
-
-
 webpush.setVapidDetails(
     'mailto:moinuddinshaikh173@gmail.com',
     apiKeys.publicKey,
     apiKeys.privateKey
-);
+)
+
+app.use(cors());
+app.use(express.json());
+
+const subDatabse = [];
+
+
+app.post("/save-subscription", (req, res) => {
+    subDatabse.push(req.body);
+    res.json({ status: "Success", message: "Subscription saved!" })
+})
+
+app.get("/send-notification", (req, res) => {
+    webpush.sendNotification(subDatabse[0], "Hello world");
+    res.json({ "statue": "Success", "message": "Message sent to push service" });
+})
 
 mongoose.connect('mongodb+srv://admin:HTN2024@images.ogr4m.mongodb.net/images?retryWrites=true&w=majority&appName=images')
     .then(() => {
@@ -39,32 +51,6 @@ app.get('/upload', (req, res) => {
 
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/views/index.html');
-});
-
-let database = [];
-app.post('/subscribe', (req, res) => {
-    const subscription = req.body;
-    database.push(subscription);
-    const output = {status: 'Success', message: 'Subscription saved successfully.'};
-    console.log(saveSubscription(subscription));
-    res.json(output);
-});
-
-const saveSubscription = async (subscription) => {
-    const response = await fetch('http://localhost:3000/subscribe', {
-        method: 'post',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(subscription)
-    });
-    return response.json();
-};
-
-app.get('/send-notification', (req, res) => {
-    webpush.sendNotification(database[0], JSON.stringify({title: 'Hello!', body: 'This is a push notification.'}))
-        .catch(err => res.send(err));
-    res.json({status: 'Success', message: 'Notification sent successfully.'});
 });
 
 // Route to serve the image

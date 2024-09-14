@@ -10,37 +10,33 @@ const urlBase64ToUint8Array = base64String => {
     for (let i = 0; i < rawData.length; ++i) {
         outputArray[i] = rawData.charCodeAt(i);
     }
-    console.log('test1')
+
     return outputArray;
 }
 
 const saveSubscription = async (subscription) => {
-    const response = await fetch('http://localhost:3000/subscribe', {
+    const response = await fetch('http://localhost:3000/save-subscription', {
         method: 'post',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(subscription),
-    });
-    return response;
-};
+        headers: { 'Content-type': "application/json" },
+        body: JSON.stringify(subscription)
+    })
 
-self.addEventListener('activate', async (e) => {
-    console.log('Service Worker activated');
+    return response.json()
+}
+
+self.addEventListener("activate", async (e) => {
     const subscription = await self.registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array('BEtmMjDI1V-07XqGUrl9vQeSuX8XJ0l37h-cDfTxKNqA2cqkWeK_5XD3gPUok1CAbbxvfhdfmwRPj43YAvM_SK0'),
-    });
-    const response = await saveSubscription(subscription);
-    console.log(response);
-});
+        applicationServerKey: urlBase64ToUint8Array("BEtmMjDI1V-07XqGUrl9vQeSuX8XJ0l37h-cDfTxKNqA2cqkWeK_5XD3gPUok1CAbbxvfhdfmwRPj43YAvM_SK0")
+    })
 
-self.addEventListener('push', e => {
-    self.registration.showNotification(
-        "Woohoo", {
-        body: data.body.text(),
-    });
-});
+    const response = await saveSubscription(subscription)
+    console.log(response)
+})
+
+self.addEventListener("push", e => {
+    self.registration.showNotification("Wohoo!!", { body: e.data.text() })
+})
 
 // Public Key:
 // BEtmMjDI1V-07XqGUrl9vQeSuX8XJ0l37h-cDfTxKNqA2cqkWeK_5XD3gPUok1CAbbxvfhdfmwRPj43YAvM_SK0
