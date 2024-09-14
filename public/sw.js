@@ -35,7 +35,19 @@ self.addEventListener("activate", async (e) => {
 })
 
 self.addEventListener("push", e => {
-    self.registration.showNotification("Wohoo!!", { body: e.data.text() })
+    const notifications = [
+        "Upload it already, we’re bored. 📸",
+        "We’re waiting for your pic. 📸",
+        "Dont loose the streak, upload a pic. 📸",
+        "Happy hacking! 📸"
+    ]
+    const options = {
+        body: "Polaros",
+        icon: "image.webp",
+    }
+    self.registration.showNotification
+    (notifications[Math.floor(Math.random() * notifications.length)]
+    , options)
 })
 
 // Public Key:
