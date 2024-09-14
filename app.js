@@ -5,17 +5,12 @@ var mongoose = require('mongoose');
 var fs = require('fs');
 var path = require('path');
 
-// Connect to the database
-mongoose.connect('mongodb+srv://admin:<HTN2024>@images.ogr4m.mongodb.net/images?retryWrites=true&w=majority&appName=images', 
-    (err) => {
-        if (err) {
-            console.log('Error connecting to the database');
-        } else {
-            app.listen(3000, () => {
-                console.log('Connected to the database, app listening on port 3000');
-            });
-        }
-    });
+mongoose.connect('mongodb+srv://admin:HTN2024@images.ogr4m.mongodb.net/images?retryWrites=true&w=majority&appName=images')
+    .then(() => {
+        console.log('Connected to MongoDB...');
+        app.listen(3000, () => console.log('Server started on port 3000'));
+    })
+    .catch(err => console.error('Could not connect to MongoDB...'));
 
 // Create a schema
 var Schema = mongoose.Schema;
@@ -28,8 +23,6 @@ var imageSchema = new Schema({
 });
 
 var Image = mongoose.model('Image', imageSchema);
-
-// Example of saving an image
 
 app.post('/upload', (req, res) => {
     var newImage = new Image();
