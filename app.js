@@ -70,16 +70,21 @@ app.get('/image/:id', async (req, res) => {
         res.status(404).send('Image not found.');
     }
 });
-
-app.post('/upload', upload.single('image'), (req, res) => {
-    if (!req.file) {
-        return res.status(400).send('No file uploaded.');
+// fields([{ name: 'avatar', maxCount: 1 }, { name: 'gallery', maxCount: 8 }])
+app.post('/upload', upload.array('name'), (req, res) => {
+    if (!req.files || req.files.length === 0) {
+        return res.status(400).send('No files uploaded.');
     }
     const newImage = new Image({
-        name: `${req.file.originalname.split('.')[0]}_${Date.now()}.${req.file.originalname.split('.').pop()}`,
-        img: {
-            data: req.file.buffer,  // Save the file as a buffer
-            contentType: req.file.mimetype  // Store the content type (e.g., 'image/jpeg')
+        namef: `${req.files[0].originalname.split('.')[0]}_${Date.now()}.${req.files[0].originalname.split('.').pop()}`,
+        imgf: {
+            data: req.files[0].buffer,  // Save the file as a buffer
+            contentType: req.files[0].mimetype  // Store the content type (e.g., 'image/jpeg')
+        },
+        nameb: `${req.files[1].originalname.split('.')[0]}_${Date.now()}.${req.files[1].originalname.split('.').pop()}`,
+        imgb: {
+            data: req.files[1].buffer,  // Save the file as a buffer
+            contentType: req.files[1].mimetype  // Store the content type (e.g., 'image/jpeg')
         }
     });
     newImage.save()
