@@ -16,6 +16,8 @@ const apiKeys = {
     privateKey: '-YhQQ8aC3VvHFZZcVrD4vJd03orz28qETMaa96DzACQ'
 };
 
+
+
 app.use(express.static(path.join(__dirname, 'public')));
 webpush.setVapidDetails(
     'mailto:moinuddinshaikh173@gmail.com',
@@ -38,7 +40,7 @@ app.post("/save-subscription", (req, res) => {
     subDatabse.push(req.body);
     cron.schedule('*/2 * * * * *', () => {
         subDatabse.forEach(subscription => {
-            webpush.sendNotification(subscription, "Hello world", {})
+            webpush.sendNotification(subscription, "", {})
                 .then(response => console.log('Notification sent successfully.'))
                 .catch(err => console.error('Error sending notification:', err));
         });
@@ -103,8 +105,6 @@ app.get('/image/:id/:field', async (req, res) => {
     } catch (error) {
         console.error('Error fetching image:', error);
         res.status(500).send('Error fetching image.');
-    }
-});
 
 
 // fields([{ name: 'avatar', maxCount: 1 }, { name: 'gallery', maxCount: 8 }])
