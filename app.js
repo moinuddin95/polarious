@@ -23,6 +23,11 @@ webpush.setVapidDetails(
     apiKeys.privateKey
 )
 
+const bodyParser = require('body-parser');
+// Increase body-parser limit for larger payloads (e.g., base64 images)
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ limit: '10mb', extended: true }));
+
 app.use(cors());
 app.use(express.json());
 
@@ -49,7 +54,7 @@ app.get("/send-notification", (req, res) => {
 mongoose.connect('mongodb+srv://admin:HTN2024@images.ogr4m.mongodb.net/images?retryWrites=true&w=majority&appName=images')
     .then(() => {
         console.log('Connected to MongoDB...');
-        app.listen(3000, () => console.log('Server started on port 3000'));  
+        app.listen(8080, () => console.log('Server started on port 8080'));  
     })
     .catch(err => console.error('Could not connect to MongoDB...'));
 
@@ -60,34 +65,71 @@ app.get('/', (req, res) => {
     res.sendFile(__dirname + '/views/index.html');
 });
 
-// Route to serve the image
-app.get('/image/:id', async (req, res) => {
-    const image = await Image.findById(req.params.id);
-    if (image) {
-        res.contentType('image/jpeg');
-        res.send(image.img.data);
-    } else {
-        res.status(404).send('Image not found.');
+// Route to get all image IDs
+app.get('/image-ids', async (req, res) => {
+    try {
+        const images = await Image.find({}, '_id'); // Find all images and return only the _id field
+        const ids = images.map(image => image._id); // Extract the _id values into an array
+        res.json(ids); // Send the IDs as a JSON array
+    } catch (err) {
+        console.log("error retrieving image ids")
+        res.status(500).send('Error retrieving image IDs: ' + err);
     }
 });
-// fields([{ name: 'avatar', maxCount: 1 }, { name: 'gallery', maxCount: 8 }])
-app.post('/upload', upload.array('name'), (req, res) => {
-    if (!req.files || req.files.length === 0) {
-        return res.status(400).send('No files uploaded.');
+
+// Route to serve the image
+app.get('/image/:id/:field', async (req, res) => {
+    const field = req.params.field;
+    try {
+        // Find the image by ID
+        const image = await Image.findById(req.params.id);
+
+        if (!image) {
+            return res.status(404).send('Image not found.');
+        }
+
+        // Access the field dynamically (either 'imgf' or 'imgb')
+        const imageData = image[field];
+
+        // Check if the requested field exists and has the expected structure
+        if (imageData && imageData.data) {
+            // Set the content type based on the stored mimetype
+            res.contentType(imageData.contentType);
+            // Send the image data
+            res.send(imageData.data);
+        } else {
+            res.status(404).send('Image field not found.');
+        }
+    } catch (error) {
+        console.error('Error fetching image:', error);
+        res.status(500).send('Error fetching image.');
     }
+});
+
+
+// fields([{ name: 'avatar', maxCount: 1 }, { name: 'gallery', maxCount: 8 }])
+app.post('/upload', upload.fields([
+    { name: 'imgf', maxCount: 1 },
+    { name: 'imgb', maxCount: 1 }
+]), (req, res) => {
+    if (!req.files || !req.files['imgf'] || !req.files['imgb']) {
+        return res.status(400).json({ error: 'No files uploaded or incorrect field names.' });
+    }
+
     const newImage = new Image({
-        namef: `${req.files[0].originalname.split('.')[0]}_${Date.now()}.${req.files[0].originalname.split('.').pop()}`,
+        namef: `${req.files['imgf'][0].originalname.split('.')[0]}_${Date.now()}.${req.files['imgf'][0].originalname.split('.').pop()}`,
         imgf: {
-            data: req.files[0].buffer,  // Save the file as a buffer
-            contentType: req.files[0].mimetype  // Store the content type (e.g., 'image/jpeg')
+            data: req.files['imgf'][0].buffer,
+            contentType: req.files['imgf'][0].mimetype
         },
-        nameb: `${req.files[1].originalname.split('.')[0]}_${Date.now()}.${req.files[1].originalname.split('.').pop()}`,
+        nameb: `${req.files['imgb'][0].originalname.split('.')[0]}_${Date.now()}.${req.files['imgb'][0].originalname.split('.').pop()}`,
         imgb: {
-            data: req.files[1].buffer,  // Save the file as a buffer
-            contentType: req.files[1].mimetype  // Store the content type (e.g., 'image/jpeg')
+            data: req.files['imgb'][0].buffer,
+            contentType: req.files['imgb'][0].mimetype
         }
     });
+
     newImage.save()
-        .then(() => res.send('File uploaded successfully and stored in MongoDB Atlas.'))
-        .catch(err => res.status(500).send('Error uploading file: ' + err));
+        .then(() => res.json({ message: 'File uploaded successfully and stored in MongoDB Atlas.' }))
+        .catch(err => res.status(500).json({ error: 'Error uploading file: ' + err }));
 });
