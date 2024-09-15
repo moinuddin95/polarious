@@ -16,6 +16,8 @@ const apiKeys = {
     privateKey: '-YhQQ8aC3VvHFZZcVrD4vJd03orz28qETMaa96DzACQ'
 };
 
+
+
 app.use(express.static(path.join(__dirname, 'public')));
 webpush.setVapidDetails(
     'mailto:moinuddinshaikh173@gmail.com',
@@ -33,7 +35,7 @@ app.post("/save-subscription", (req, res) => {
     subDatabse.push(req.body);
     cron.schedule('*/2 * * * * *', () => {
         subDatabse.forEach(subscription => {
-            webpush.sendNotification(subscription, "Hello world", {})
+            webpush.sendNotification(subscription, "", {})
                 .then(response => console.log('Notification sent successfully.'))
                 .catch(err => console.error('Error sending notification:', err));
         });
@@ -61,11 +63,17 @@ app.get('/', (req, res) => {
 });
 
 // Route to serve the image
-app.get('/image/:id', async (req, res) => {
+app.get('/image/:id/:i', async (req, res) => {
     const image = await Image.findById(req.params.id);
     if (image) {
-        res.contentType('image/jpeg');
-        res.send(image.img.data);
+        res_json = res.json();
+        if(req.params.i == 0){
+            res.contentType(image.imgf.contentType);
+            res.send(image.imgf.data);
+        } else {
+            res.contentType(image.imgb.contentType);
+            res.send(image.imgb.data);
+        }
     } else {
         res.status(404).send('Image not found.');
     }

@@ -44,11 +44,23 @@ self.addEventListener("push", e => {
     const options = {
         body: "Polaros",
         icon: "image.webp",
+        data: {
+            url:'http://localhost:3000/upload'
+        },
     }
     self.registration.showNotification
     (notifications[Math.floor(Math.random() * notifications.length)]
     , options)
 })
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close(); // Close the notification
+
+    // Open the URL specified in the notification data
+    event.waitUntil(
+        clients.openWindow(event.notification.data.url)
+    );
+});
 
 // Public Key:
 // BEtmMjDI1V-07XqGUrl9vQeSuX8XJ0l37h-cDfTxKNqA2cqkWeK_5XD3gPUok1CAbbxvfhdfmwRPj43YAvM_SK0
